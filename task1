@@ -1,0 +1,111 @@
+#include <iostream>
+#include <random>
+#include <string>
+#include <vector>
+
+
+class Vector {
+public:
+    int size;
+    std::vector<int> intData;
+    std::vector<std::string> strData;
+    std::string dataType;
+
+    Vector(int size, const std::string& dataType) : size(size), dataType(dataType) {
+        Fill(); 
+    }
+
+    // This is a function to fill the vector based on its data type
+    void Fill() {
+        std::random_device rd; // This creates a random device
+        std::mt19937 gen(rd()); // Now using the random device, pseudo-random numbers are generated. (This is called Mersenne Twister generator)
+        std::uniform_int_distribution<> intDist(1, 100);       // To generate random integers from 1-100
+        std::uniform_int_distribution<char> charDist('A', 'Z'); // Random character from A to Z
+
+        if (dataType == "INT64") {
+            intData.resize(size); //Resizes the intData to a size---> size
+            for (int i = 0; i < size; ++i) {
+                intData[i] = intDist(gen);  // Generates a random integer join key
+            }
+        } else if (dataType == "VARCHAR") {
+            strData.resize(size);
+            for (int i = 0; i < size; ++i) {
+                std::string str;
+                for (int j = 0; j < 4; ++j)
+                    str += charDist(gen); // I could have taken the length of the string as input from user but I was facing some issues in while printing, so I just assumed it as 4.
+                strData[i] = str;
+            }
+        }
+    }
+};
+
+
+void matchKeys(Vector& leftVector, Vector& rightVector) {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> RangeOTM(1, 3); // 
+    std::uniform_int_distribution<> Select(0, 1); // To choose whether its one-to-one or one-to-many
+
+    int rightIndex = 0;  // Track index in right vector
+
+    for (int i = 0; i < leftVector.size && rightIndex < rightVector.size; ++i) {
+        bool isOneone = Select(gen);
+
+        if (isOneone) {
+            if (leftVector.dataType == "INT64")
+                rightVector.intData[rightIndex] = leftVector.intData[i];
+            else
+                rightVector.strData[rightIndex] = leftVector.strData[i];
+            rightIndex++;
+        } else {
+            int matches = Select(gen);
+            for (int j = 0; j < matches && rightIndex < rightVector.size; ++j) {
+                if (leftVector.dataType == "INT64")
+                    rightVector.intData[rightIndex] = leftVector.intData[i];
+                else
+                    rightVector.strData[rightIndex] = leftVector.strData[i];
+                rightIndex++;
+            }
+        }
+    }
+}
+int main() {
+    int numRowsLeft, numRowsRight;
+    std::string dataType;
+
+    std::cout << "Enter the number of rows in the left table: ";
+    std::cin >> numRowsLeft;
+    std::cout << "Enter the number of rows in the right table: ";
+    std::cin >> numRowsRight;
+    std::cout << "Enter the data type for join keys (INT64 or VARCHAR): ";
+    std::cin >> dataType;
+
+    Vector leftVector(numRowsLeft, dataType);
+    Vector rightVector(numRowsRight, dataType);
+
+    matchKeys(leftVector, rightVector);
+
+    std::cout << "\nGenerated Data:\n";
+    
+    std::cout << "Left Table Join Key Vector: { ";
+    for (int i = 0; i < numRowsLeft; ++i) {
+        if (dataType == "INT64")
+            std::cout << leftVector.intData[i] << (i < numRowsLeft - 1 ? ", " : " ");
+        else
+            std::cout << leftVector.strData[i] << (i < numRowsLeft - 1 ? ", " : " ");
+    }
+    std::cout << "}\n";
+
+    std::cout << "Right Table Join Key Vector:\n";
+    std::cout << "| ID (Join Key) |\n";
+    std::cout << "----------------\n";
+    for (int i = 0; i < rightVector.size; ++i) {
+        if (dataType == "INT64")
+            std::cout << "|      " << rightVector.intData[i] << "        |\n";
+        else
+            std::cout << "|      " << rightVector.strData[i] << "        |\n";
+    }
+    std::cout << std::endl;
+
+    return 0;
+}
