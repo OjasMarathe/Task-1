@@ -58,7 +58,7 @@ void matchKeys(Vector& leftVector, Vector& rightVector) {
                 rightVector.strData[rightIndex] = leftVector.strData[i];
             rightIndex++;
         } else {
-            int matches = Select(gen);
+            int matches = RangeOTM(gen);
             for (int j = 0; j < matches && rightIndex < rightVector.size; ++j) {
                 if (leftVector.dataType == "INT64")
                     rightVector.intData[rightIndex] = leftVector.intData[i];
